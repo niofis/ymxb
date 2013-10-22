@@ -89,10 +89,116 @@ int ppm_create(char* filename, int width, int height, short max_color, int* data
 ##     ## ######## ##    ## ########  ######## ##     ## 
 */
 
-int render(int width, int height, int* buffer)
+typedef struct 
+{
+	float a;
+	float r;
+	float g;
+	float b;
+} rnd_color;
+
+typedef struct 
+{
+	float x;
+	float y;
+	float z;
+} rnd_vector3;
+
+typedef struct
+{
+	rnd_vector3 left_top;
+	rnd_vector3 lef_bottom;
+	rnd_vector3 right_top;
+	rnd_vector3 eye;
+} rnd_camera;
+
+typedef struct 
+{
+	rnd_vector3 pt1;
+	rnd_vector3 pt2;
+	rnd_vector3 pt3;
+} rnd_triangle;
+
+typedef struct 
+{
+	rnd_camera *camera;
+	rnd_triangle *objects;
+} rnd_scene;
+
+
+typedef struct
+{
+	rnd_vector3 direction;
+	rnd_vector3 origin;
+	float refraction_index;
+} rnd_ray;
+
+rnd_ray* rnd_getray(int x, int y)
+{
+	rnd_ray* ray;
+	ray=(rnd_ray *)malloc(sizeof(rnd_ray));
+
+	return ray;
+}
+
+typedef struct 
+{
+	float width;
+	float height;
+	int *buffer;
+	rnd_scene *scene;
+} job_desc;
+
+job_desc* job_create()
+{
+	job_desc *job;
+
+	job=(job_desc*) malloc(sizeof(job_desc));
+	job->scene=(rnd_scene*) malloc(sizeof(rnd_scene));
+
+	return job;
+}
+
+void job_delete(job_desc* job)
+{
+	free(job->scene);
+	free(job);
+}
+
+job_desc* job_demo()
+{
+	job_desc *job;
+
+	job = job_create();
+
+	job->width=1280;
+	job->height=720;
+
+	job->buffer = malloc(sizeof(int)*job->width*job->height);
+
+	return job;
+}
+
+
+
+/*
+##     ##    ###    #### ##    ## 
+###   ###   ## ##    ##  ###   ## 
+#### ####  ##   ##   ##  ####  ## 
+## ### ## ##     ##  ##  ## ## ## 
+##     ## #########  ##  ##  #### 
+##     ## ##     ##  ##  ##   ### 
+##     ## ##     ## #### ##    ## 
+*/
+
+int render(job_desc *job)
 {
 	int x=0;
 	int y=0;
+	int width=job->width;
+	int height=job->height;
+	int *buffer=job->buffer;
+
 	for(y=0;y<height;++y)
 	{
 		for(x=0;x<width;++x)
@@ -105,32 +211,18 @@ int render(int width, int height, int* buffer)
 	return 0;
 }
 
-
-/*
-##     ##    ###    #### ##    ## 
-###   ###   ## ##    ##  ###   ## 
-#### ####  ##   ##   ##  ####  ## 
-## ### ## ##     ##  ##  ## ## ## 
-##     ## #########  ##  ##  #### 
-##     ## ##     ##  ##  ##   ### 
-##     ## ##     ## #### ##    ## 
-*/
 int main(int argc, char* argv)
 {
-	int width;
-	int height;
-	int* buffer;
+	job_desc *job;
 
-	width=640;
-	height=480;
+	job = job_demo();
 
-	buffer=(int*)malloc(sizeof(int)*width*height);
+	render(job);
 
-	render(width,height,buffer);
+	ppm_create("image.ppm",job->width,job->height,255,job->buffer);
 
-	ppm_create("image.ppm",width,height,255,buffer);
-
-	free(buffer);
+	free(job->buffer);
+	job_delete(job);
 
 	return 0;
 }
