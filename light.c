@@ -31,7 +31,10 @@
 	#define byte unsigned char
 #endif
 
-#define int int32_t
+#ifdef int32_t
+	#define int int32_t
+#endif
+
 
 #define BPP 4
 
@@ -146,35 +149,17 @@ typedef struct
 	float width;
 	float height;
 	int *buffer;
-	rnd_scene *scene;
+	rnd_scene scene;
 } job_desc;
 
-job_desc* job_create()
+job_desc job_demo()
 {
-	job_desc *job;
+	job_desc job;
 
-	job=(job_desc*) malloc(sizeof(job_desc));
-	job->scene=(rnd_scene*) malloc(sizeof(rnd_scene));
+	job.width=1280;
+	job.height=720;
 
-	return job;
-}
-
-void job_delete(job_desc* job)
-{
-	free(job->scene);
-	free(job);
-}
-
-job_desc* job_demo()
-{
-	job_desc *job;
-
-	job = job_create();
-
-	job->width=1280;
-	job->height=720;
-
-	job->buffer = malloc(sizeof(int)*job->width*job->height);
+	job.buffer = (int *)malloc(sizeof(int)*job.width*job.height);
 
 	return job;
 }
@@ -191,13 +176,13 @@ job_desc* job_demo()
 ##     ## ##     ## #### ##    ## 
 */
 
-int render(job_desc *job)
+int render(job_desc job)
 {
 	int x=0;
 	int y=0;
-	int width=job->width;
-	int height=job->height;
-	int *buffer=job->buffer;
+	int width=job.width;
+	int height=job.height;
+	int *buffer=job.buffer;
 
 	for(y=0;y<height;++y)
 	{
@@ -213,16 +198,14 @@ int render(job_desc *job)
 
 int main(int argc, char* argv)
 {
-	job_desc *job;
-
-	job = job_demo();
+	job_desc job = job_demo();
 
 	render(job);
 
-	ppm_create("image.ppm",job->width,job->height,255,job->buffer);
+	ppm_create("image.ppm",job.width,job.height,255,job.buffer);
 
-	free(job->buffer);
-	job_delete(job);
+	free(job.buffer);
 
 	return 0;
 }
+
