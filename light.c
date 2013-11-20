@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 /*
  ######   ##        #######  ########     ###    ##          ########  ######## ########  ######  
@@ -98,49 +99,57 @@ typedef struct
 	float r;
 	float g;
 	float b;
-} rnd_color;
+} st_color;
 
 typedef struct 
 {
 	float x;
 	float y;
 	float z;
-} rnd_vector3;
+} st_vector3;
 
 typedef struct
 {
-	rnd_vector3 left_top;
-	rnd_vector3 lef_bottom;
-	rnd_vector3 right_top;
-	rnd_vector3 eye;
-} rnd_camera;
+	st_vector3 left_top;
+	st_vector3 lef_bottom;
+	st_vector3 right_top;
+	st_vector3 eye;
+} st_camera;
 
 typedef struct 
 {
-	rnd_vector3 pt1;
-	rnd_vector3 pt2;
-	rnd_vector3 pt3;
-} rnd_triangle;
+	st_vector3 pt1;
+	st_vector3 pt2;
+	st_vector3 pt3;
+} st_triangle;
 
 typedef struct 
 {
-	rnd_camera *camera;
-	rnd_triangle *objects;
-} rnd_scene;
+	st_camera *camera;
+	st_triangle *objects;
+} st_scene;
 
 
 typedef struct
 {
-	rnd_vector3 direction;
-	rnd_vector3 origin;
+	st_vector3 direction;
+	st_vector3 origin;
 	float refraction_index;
-} rnd_ray;
+} st_ray;
 
-rnd_ray* rnd_getray(int x, int y)
+typedef struct
 {
-	rnd_ray* ray;
-	ray=(rnd_ray *)malloc(sizeof(rnd_ray));
+	int hit;
+	st_color color;
+	st_vector3 point;
+	st_triangle object;
+} st_result;
 
+st_ray rnd_getray(int x, int y)
+{
+	st_ray ray;
+	//ray=(st_ray *)malloc(sizeof(st_ray));
+	ray.direction.x=0;
 	return ray;
 }
 
@@ -149,7 +158,7 @@ typedef struct
 	float width;
 	float height;
 	int *buffer;
-	rnd_scene scene;
+	st_scene scene;
 } job_desc;
 
 job_desc job_demo()
@@ -164,7 +173,30 @@ job_desc job_demo()
 	return job;
 }
 
+//returns color
+st_result rnd_traceray(st_ray ray)
+{
+	st_result result;
+	result.color.a=1.0f;
+	result.color.r=1.0f;
+	result.color.g=1.0f;
+	result.color.b=0.0f;
+	return result;
+}
 
+int rnd_color_to_argb(st_color color)
+{
+	int argb=0;
+	argb = (int)((color.a<1.0f?color.a:1.0f)*255);
+	argb = argb<<8;
+	argb |= (int)((color.r<1.0f?color.r:1.0f)*255);
+	argb = argb<<8;
+	argb |= (int)((color.g<1.0f?color.g:1.0f)*255);
+	argb = argb<<8;
+	argb |= (int)((color.b<1.0f?color.b:1.0f)*255);
+	printf("(%f,%f,%f) %X\n",color.r,color.g,color.b,argb);
+	return argb;
+}
 
 /*
 ##     ##    ###    #### ##    ## 
@@ -184,13 +216,18 @@ int render(job_desc job)
 	int height=job.height;
 	int *buffer=job.buffer;
 
+
 	for(y=0;y<height;++y)
 	{
 		for(x=0;x<width;++x)
 		{
-			int p=(y*height + x);
+			int p=y*height + x;
+			st_result res;
+			st_ray ray;
+			ray=rnd_getray(x,y);
+			res=rnd_traceray(ray);
 			//ARGB
-			buffer[p]=0xFF0000FF;
+			buffer[p]=rnd_color_to_argb(res.color);
 		}
 	}
 	return 0;
