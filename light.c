@@ -71,6 +71,8 @@ int ppm_create(char* filename, int width, int height, short max_color, int* data
 				fputc(pixel[1],file);
 				fputc(pixel[2],file);
 				fputc(pixel[3],file);
+
+				printf("(%i,%i,%i) %X \n",pixel[1],pixel[2],pixel[3],((int*)pixel));
 			}
 		}
 
@@ -194,7 +196,7 @@ int rnd_color_to_argb(st_color color)
 	argb |= (int)((color.g<1.0f?color.g:1.0f)*255);
 	argb = argb<<8;
 	argb |= (int)((color.b<1.0f?color.b:1.0f)*255);
-	printf("(%f,%f,%f) %X\n",color.r,color.g,color.b,argb);
+	//printf("(%f,%f,%f) %X \n",color.r,color.g,color.b,argb);
 	return argb;
 }
 
@@ -242,6 +244,8 @@ int main(int argc, char* argv)
 	ppm_create("image.ppm",job.width,job.height,255,job.buffer);
 
 	free(job.buffer);
+
+	system("pause");
 
 	return 0;
 }
