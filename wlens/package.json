@@ -1,0 +1,15 @@
+{
+  "name": "xpseed",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "3.4.*",
+    "underscore": "~1.5.*",
+    "bliss": "~1.0.*",
+    "socket.io": "~0.9.16",
+    "pngjs": "~0.4.0"
+  }
+}
