@@ -1,5 +1,5 @@
 //For ASCII banners:
-//http://www.desmoulins.fr/index_us.php?pg=scripts!online!asciiart
+//http://www.network-science.de/ascii/
 //font: banner3
 
 /*
