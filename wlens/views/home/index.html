@@ -2,31 +2,64 @@
 
 @function body() {
   <h1>Woohooo!</h1>
-  <canvas id='c' width='800' height='300'></canvas>
+  <canvas id='canvasview' width='800' height='300'></canvas>
 }
 
 @function scripts() {
 	<script>
-	  $c = document.getElementById('c');
-	  $ctx = $c.getContext('2d');
-	  $ctx.clearRect(0, 0, 800, 300);
-	  $px = $ctx.createImageData(1, 1);
-	  $pxls = [];
-	  // Precompute random pixels so this time isn't included in the tests
-	for (var i = 0; i < 10000; ++i) {
-	    var px={
-	   x: Math.random() * 800 << 0,
-	   y: Math.random() * 300 << 0,
-	   r: Math.random() * 255 << 0,
-	   g: Math.random() * 255 << 0,
-	   b: Math.random() * 255 << 0,
-	   a: Math.random() * 128 << 0 + 128
-	}
-	$ctx.fillStyle = 'rgba(' + px.r + ',' + px.g + ',' + px.b + ',' + (px.a / 255) + ')';
-	$ctx.fillRect(px.x, px.y, 1, 1);
-	                                };
-	  $i = 0;
-	console.log("algo");   
+
+		// shim layer with setTimeout fallback
+		window.requestAnimFrame = (function(){
+		  return  window.requestAnimationFrame       ||
+		          window.webkitRequestAnimationFrame ||
+		          window.mozRequestAnimationFrame    ||
+		          function( callback ){
+		            window.setTimeout(callback, 1000 / 60);
+		          };
+		})();
+
+
+		// usage:
+		// instead of setInterval(render, 16) ....
+
+		
+		// place the rAF *before* the render() to assure as close to
+		// 60fps with the setTimeout fallback.
+
+
+		var canvas = document.getElementById('canvasview');
+		var width = canvas.width;
+		var height = canvas.height;
+		var ctx = canvas.getContext('2d');
+		var img = ctx.createImageData(width,height);
+
+		ctx.clearRect(0, 0, width, height);
+
+		function render() {
+			var color = {
+				r:Math.random() * 256 % 256,
+				g:Math.random() * 256 % 256,
+				b:Math.random() * 256 % 256
+			}
+			for(var y = 0; y < height; ++y){
+				for(var x = 0; x < width; ++x){
+					//ctx.fillStyle='rgba(0,0,0,255)';
+					//ctx.fillRect(x,y,1,1);
+					var p = (y*width + x) * 4;
+					img.data[p]=color.r;
+					img.data[p+1]=color.g;
+					img.data[p+2]=color.b;
+					img.data[p+3]=255;
+
+				}
+			}
+
+			ctx.putImageData(img,0,0);
+		}
+	(function animloop(){
+		  requestAnimFrame(animloop);
+		  render();
+		})();
 	</script>
 }
 @render("../layouts/main.html",body,scripts);
