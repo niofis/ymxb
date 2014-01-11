@@ -51,10 +51,10 @@ lens.Vector3 = (function () {
 
 lens.Color = (function (){
 	var c = function (r,g,b,a) {
-		this.a = a || 0;
 		this.r = r || 0;
-		this.b = b || 0;
 		this.g = g || 0;
+		this.b = b || 0;
+		this.a = a || 1.0;
 	}
 
 	c.prototype.to255 = function () {
@@ -72,9 +72,9 @@ lens.Color = (function (){
 
 lens.Sphere = (function () {
 	var sp = function (center, radius, color) {
-		this.center = center || new Vector3();
+		this.center = center || new lens.Vector3();
 		this.radius = radius || 0;
-		this.color = color || new Color();
+		this.color = color || new lens.Color();
 	};
 	return sp;
 })();
@@ -92,7 +92,7 @@ lens.Camera = (function () {
 
 lens.Scene = (function (){
 	var scn = function (camera, objects) {
-		this.camera= camera || new Camera();
+		this.camera= camera || new lens.Camera();
 		this.objects = objects || [];
 	}
 
@@ -116,8 +116,8 @@ lens.Section = (function () {
 
 lens.Job = (function (){
 	var j = function (scene,section) {
-		this.scene = scene || new Scene();
-		this.section= section || new Section();
+		this.scene = scene || new lens.Scene();
+		this.section= section || new lens.Section();
 	}
 
 	return j;
@@ -125,7 +125,7 @@ lens.Job = (function (){
 
 lens.Renderer = (function () {
 	var rndr = function () {
-		this.job = new Job();
+		this.job = new lens.Job();
 	}
 
 	function getRay(x,y){
@@ -146,8 +146,24 @@ lens.Renderer = (function () {
 	return rndr;
 })();
 
+lens.SceneDemo1 = function () {
+	var scn = new lens.Scene();
+	var sp = new lens.Sphere(
+		new lens.Vector3(0,0,0),
+		1.0,
+		new lens.Color(0,0,1.0,1.0));
+
+	return scn;
+};
+
 lens.render = function(done){
 	var buffer = [];
+
+	var scene = new Scene();
+	var section = new Section();
+	var job = new Job();
+
+
 	done(buffer);
 }
 
@@ -185,8 +201,8 @@ if(app.env === 'node'){
 	for(var y=0;y<height;++y){
 		for(var x=0;x<width;++x){
 			var p = 4*(y*width + x);
-			png.data[p] = 0;
-			png.data[p+1] = 255;
+			png.data[p] = 255;
+			png.data[p+1] = 0;
 			png.data[p+2] = 0;
 			png.data[p+3] = 255;
 		}
