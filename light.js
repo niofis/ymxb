@@ -58,13 +58,14 @@ lens.Color = (function (){
 	}
 
 	c.prototype.to255 = function () {
-		return 
-		[		
+		var c255=[		
 			Math.min(this.r*255,255),
 			Math.min(this.g*255,255),
 			Math.min(this.b*255,255),
 			Math.min(this.a*255,255)
 		];
+		return c255;
+		
 	}
 
 	return c;
@@ -81,10 +82,10 @@ lens.Sphere = (function () {
 
 lens.Camera = (function () {
 	var cam = function (left_bottom, left_top, right_top, eye) {
-		this.left_bottom = left_bottom || new Vector3();
-		this.left_top = left_top || new Vector3();
-		this.right_top = right_top || new Vector3();
-		this.eye = eye || new Vector3();
+		this.left_bottom = left_bottom || new lens.Vector3();
+		this.left_top = left_top || new lens.Vector3();
+		this.right_top = right_top || new lens.Vector3();
+		this.eye = eye || new lens.Vector3();
 	}
 
 	return cam;
@@ -97,27 +98,37 @@ lens.Scene = (function (){
 	}
 
 	scn.prototype.addObj = function (obj){
-		this.object.push(obj);
+		this.objects.push(obj);
 	}
 
 	return scn;
 })();
 
 lens.Section = (function () {
-	var sct = function (left,top,right,bottom){
-		this.left = this.left || 0;
-		this.top = this.top || 0;
-		this.right = this.width || 0;
-		this.bottom = this.height ||0;
+	var sct = function (left,top,width,height){
+		this.left = left || 0;
+		this.top = top || 0;
+		this.width = width || 0;
+		this.height = height ||0;
 	}
 
 	return sct;
 })();
 
+lens.Resolution = (function (){
+	var rs = function(width,height){
+		this.width = width || 640;
+		this.height = height || 480;
+	}
+
+	return rs;
+})();
+
 lens.Job = (function (){
-	var j = function (scene,section) {
+	var j = function (scene,section,resolution) {
 		this.scene = scene || new lens.Scene();
 		this.section= section || new lens.Section();
+		this.resolution = resolution || new lens.Resolution();
 	}
 
 	return j;
@@ -129,18 +140,19 @@ lens.Renderer = (function () {
 	}
 
 	function getRay(x,y){
-
+		
 	}
 
-	rndr.prototype.render = function (job) {
+	rndr.prototype.render = function (job,buffer) {
 		var j = this.job = job;
+		var s = j.section;
 
-		for(var y = j.top; y <= j.bottom; ++y){
-			for(var x = j.left; x <= j.right; ++x){
-				var ray = getRay(x,y);
+		for(var y = 0; y < s.height; ++y){
+			for(var x = 0; x < s.width; ++x){
+				var ray = getRay(x + s.left,y + s.top);
+				buffer[y*s.width + x] = new lens.Color(1.0,0,0,1.0);
 			}
 		}
-
 	}
 
 	return rndr;
@@ -148,10 +160,20 @@ lens.Renderer = (function () {
 
 lens.SceneDemo1 = function () {
 	var scn = new lens.Scene();
+	//Blue sphere
 	var sp = new lens.Sphere(
 		new lens.Vector3(0,0,0),
 		1.0,
 		new lens.Color(0,0,1.0,1.0));
+	scn.addObj(sp);
+
+	//4:3 camera
+	var cam = new lens.Camera(
+		new lens.Vector3(-3.2,0,-5),
+		new lens.Vector3(-3.2,4.8,-5),
+		new lens.Vector3(3.2,4.8,-5),
+		new lens.Vector3(0,2.4,-15));
+	scn.camera=cam;
 
 	return scn;
 };
@@ -159,10 +181,13 @@ lens.SceneDemo1 = function () {
 lens.render = function(done){
 	var buffer = [];
 
-	var scene = new Scene();
-	var section = new Section();
-	var job = new Job();
+	var scene = lens.SceneDemo1();
+	var section = new lens.Section(0,0,640,480);
+	var resolution = new lens.Resolution(640,480);
+	var job = new lens.Job(scene,section,resolution);
 
+	var renderer = new lens.Renderer();
+	renderer.render(job,buffer);
 
 	done(buffer);
 }
@@ -195,19 +220,25 @@ if(app.env === 'node'){
 	var pngjs = require('pngjs');
 	var width=640;
 	var height = 480;
-	var png = new pngjs.PNG({width:width,height:height});
+
+	lens.render(function(buffer){
+		var png = new pngjs.PNG({width:width,height:height});
 
 
-	for(var y=0;y<height;++y){
-		for(var x=0;x<width;++x){
-			var p = 4*(y*width + x);
-			png.data[p] = 255;
-			png.data[p+1] = 0;
-			png.data[p+2] = 0;
-			png.data[p+3] = 255;
+		for(var y=0;y<height;++y){
+			for(var x=0;x<width;++x){
+				var p = 4*(y*width + x);
+				var c = buffer[(y*width + x)].to255();
+
+				png.data[p] = c[0];
+				png.data[p+1] = c[1];
+				png.data[p+2] = c[2];
+				png.data[p+3] = c[3];
+			}
 		}
-	}
 
 
-	png.pack().pipe(fs.createWriteStream('out.png'));
+		png.pack().pipe(fs.createWriteStream('out.png'));
+	});
+	
 }
