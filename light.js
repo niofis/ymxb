@@ -140,12 +140,15 @@ lens.Renderer = (function () {
 	}
 
 	function getRay(x,y){
-		
+		var point = (this.job.scene.camera.lt + (this.hdv*x) + (this.vdv*y))		
 	}
 
 	rndr.prototype.render = function (job,buffer) {
 		var j = this.job = job;
 		var s = j.section;
+
+		this.hdv=(j.scene.camera.right_top - j.scene.camera.left_top) / j.resolution.width
+		this.vdv=(j.scene.camera.left_bottom - j.scene.camera.left_top) / j.resolution.height 
 
 		for(var y = 0; y < s.height; ++y){
 			for(var x = 0; x < s.width; ++x){
