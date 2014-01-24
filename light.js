@@ -15,37 +15,53 @@ lens.Vector3 = (function () {
 		return Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z);
 	}
 
-	v.prototype.normalize = function () {
+	v.prototype.normal = function () {
 		var len = this.length();
-		this.x /= len;
-		this.y /= len;
-		this.z /= len;
+		return new lens.Vector3(
+			this.x / len,
+			this.y / len,
+			this.z / len);
 	}
 
 	v.prototype.add = function (v) {
-		this.x += v.x;
-		this.y += v.y;
-		this.z += v.z;
+		return new lens.Vector3(
+			this.x + v.x,
+			this.y + v.y,
+			this.z + v.z);
 	}
 
 	v.prototype.sub = function (v) {
-		this.x -= v.x;
-		this.y -= v.y;
-		this.z -= v.z;
+		return new lens.Vector3(
+			this.x - v.x,
+			this.y - v.y,
+			this.z - v.z);
 	}
 
 	v.prototype.cross = function (v) {
 		var tx = this.y*v.z - this.z*v.y;
 		var ty = this.z*v.x - this.x*v.z;
 		var tz = this.x*v.y - this.y*v.x;
-		this.x=tx;
-		this.y=ty;
-		this.z=tz;
+		return new lens.Vector3(tx,ty,tz);
 	}
 
 	v.prototype.dot = function (v) {
 		return this.x*v.x + this.y*v.y + this.z*v.z;
 	}
+
+	v.prototype.mul = function (s) {
+		return new lens.Vector3(
+			this.x * s,
+			this.y * y,
+			this.z * s);
+	}
+
+	v.prototype.div = function (s) {
+		return new lens.Vector3(
+			this.x / s,
+			this.y / s,
+			this.z / s);
+	}
+
 	return v;
 })();
 
@@ -65,10 +81,18 @@ lens.Color = (function (){
 			Math.min(this.a*255,255)
 		];
 		return c255;
-		
 	}
 
 	return c;
+})();
+
+lens.Ray = (function () {
+	var ray = function (origin, direction) {
+		this.origin = origin;
+		this.direction = direction;
+	};
+
+	return ray;
 })();
 
 lens.Sphere = (function () {
@@ -140,15 +164,31 @@ lens.Renderer = (function () {
 	}
 
 	function getRay(x,y){
-		var point = (this.job.scene.camera.lt + (this.hdv*x) + (this.vdv*y))		
+		//var point = (this.job.scene.camera.lt + (this.hdv*x) + (this.vdv*y));
+		var screen_point = 
+			this.job.scene.camera.lt
+			.add(this.hdv.mul(x))
+			.add(this.vdv.mul(y));
+
+		var direction = screen_point
+			.sub(this.job.scene.camera.eye)
+			.normal();
+
+		var ray = new lens.Ray(screen_point,direction);
+		return ray;
 	}
 
 	rndr.prototype.render = function (job,buffer) {
 		var j = this.job = job;
 		var s = j.section;
 
-		this.hdv=(j.scene.camera.right_top - j.scene.camera.left_top) / j.resolution.width
-		this.vdv=(j.scene.camera.left_bottom - j.scene.camera.left_top) / j.resolution.height 
+		this.hdv = j.scene.camera.right_top
+			.sub(j.scene.camera.left_top)
+			.div(j.resolution.width);
+
+		this.vdv = j.scene.camera.left_bottom
+			.sub(j.scene.camera.left_top)
+			.div(j.resolution.height );
 
 		for(var y = 0; y < s.height; ++y){
 			for(var x = 0; x < s.width; ++x){
