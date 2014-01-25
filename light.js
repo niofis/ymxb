@@ -51,7 +51,7 @@ lens.Vector3 = (function () {
 	v.prototype.mul = function (s) {
 		return new lens.Vector3(
 			this.x * s,
-			this.y * y,
+			this.y * s,
 			this.z * s);
 	}
 
@@ -101,6 +101,38 @@ lens.Sphere = (function () {
 		this.radius = radius || 0;
 		this.color = color || new lens.Color();
 	};
+
+	sp.prototype.hit = function (ray) {
+		var result = {
+			hit: false,
+			distance: 0
+		}
+		var f = ray.origin.sub(this.center);
+		var b = f.dot(ray.direction) * -2.0;
+		var b2 = b * b;
+		var c = f.dot(f) - (this.radius * this.radius);
+		var i = b2 - (4.0 * c);
+
+		if (i < 0) {
+			return result;
+		}
+
+		var t0 = Math.sqrt(i);
+		var t = (b - t0) / 2;
+
+		if (t < 0.1){
+			t = (b + t0) / 2;
+		}
+
+		if (t < 0.01){
+			return result;
+		}
+
+		result.hit = true;
+		result.distance = t;
+
+		return result;
+	}
 	return sp;
 })();
 
@@ -163,10 +195,10 @@ lens.Renderer = (function () {
 		this.job = new lens.Job();
 	}
 
-	function getRay(x,y){
+	rndr.prototype.getRay = function (x,y){
 		//var point = (this.job.scene.camera.lt + (this.hdv*x) + (this.vdv*y));
 		var screen_point = 
-			this.job.scene.camera.lt
+			this.job.scene.camera.left_top
 			.add(this.hdv.mul(x))
 			.add(this.vdv.mul(y));
 
@@ -176,6 +208,26 @@ lens.Renderer = (function () {
 
 		var ray = new lens.Ray(screen_point,direction);
 		return ray;
+	}
+
+	rndr.prototype.trace = function (ray){
+		var closer = {
+			distance : Number.MAX_VALUE,
+			obj: null,
+			hit: false
+		};
+		this.job.scene.objects.forEach(function (obj) {
+			var res = obj.hit(ray);
+			
+			if (res.hit == true && res.distance < closer.distance) {
+				closer.distance = res.distance;
+				closer.obj = obj;
+				closer.hit = true;
+			}
+
+		});
+
+		return closer;
 	}
 
 	rndr.prototype.render = function (job,buffer) {
@@ -192,8 +244,12 @@ lens.Renderer = (function () {
 
 		for(var y = 0; y < s.height; ++y){
 			for(var x = 0; x < s.width; ++x){
-				var ray = getRay(x + s.left,y + s.top);
-				buffer[y*s.width + x] = new lens.Color(1.0,0,0,1.0);
+				var ray = this.getRay(x + s.left,y + s.top);
+				var result = this.trace(ray);
+				if(result.hit)
+					buffer[y*s.width + x] = new lens.Color(1.0,0,0,1.0);
+				else
+					buffer[y*s.width + x] = new lens.Color(0.0,0,0,1.0);
 			}
 		}
 	}
