@@ -83,6 +83,16 @@ lens.Color = (function (){
 		return c255;
 	}
 
+	c.prototype.mul = function (s) {
+		var r = new lens.Color(
+			this.r * s,
+			this.g * s,
+			this.b * s,
+			this.a);
+
+		return r;
+	}
+
 	return c;
 })();
 
@@ -95,12 +105,25 @@ lens.Ray = (function () {
 	return ray;
 })();
 
+lens.PointLight = (function () {
+	var li = function (center) {
+		this.center = center || new lens.Vector3();
+	}
+
+	return li;
+})();
+
 lens.Sphere = (function () {
 	var sp = function (center, radius, color) {
 		this.center = center || new lens.Vector3();
 		this.radius = radius || 0;
 		this.color = color || new lens.Color();
 	};
+
+	sp.prototype.normal = function (point) {
+		var n = point.sub(this.center).normal();
+		return n;
+	}
 
 	sp.prototype.hit = function (ray) {
 		var result = {
@@ -148,13 +171,18 @@ lens.Camera = (function () {
 })();
 
 lens.Scene = (function (){
-	var scn = function (camera, objects) {
+	var scn = function (camera, objects, lights) {
 		this.camera= camera || new lens.Camera();
 		this.objects = objects || [];
+		this.lights = lights || [];
 	}
 
 	scn.prototype.addObj = function (obj){
 		this.objects.push(obj);
+	}
+
+	scn.prototype.addLight = function (li) {
+		this.lights.push(li);
 	}
 
 	return scn;
@@ -211,23 +239,32 @@ lens.Renderer = (function () {
 	}
 
 	rndr.prototype.trace = function (ray){
-		var closer = {
+		var result = {
 			distance : Number.MAX_VALUE,
 			obj: null,
-			hit: false
+			hit: false,
+			color: new lens.Color()
 		};
 		this.job.scene.objects.forEach(function (obj) {
-			var res = obj.hit(ray);
+			var trc = obj.hit(ray);
 			
-			if (res.hit == true && res.distance < closer.distance) {
-				closer.distance = res.distance;
-				closer.obj = obj;
-				closer.hit = true;
+			if (trc.hit == true && trc.distance < result.distance) {
+				result.distance = trc.distance;
+				result.obj = obj;
+				result.hit = true;
+				result.hit_point = ray.origin.add(ray.direction.mul(
+						result.distance));
+				result.normal = result.obj.normal(result.hit_point);
 			}
-
 		});
 
-		return closer;
+		return result;
+	}
+
+	rndr.prototype.shade = function (ray, result) {
+		var tc = - ray.direction.dot(result.hit_point);
+		result.color = result.obj.color.mul(tc);
+		
 	}
 
 	rndr.prototype.render = function (job,buffer) {
@@ -246,8 +283,10 @@ lens.Renderer = (function () {
 			for(var x = 0; x < s.width; ++x){
 				var ray = this.getRay(x + s.left,y + s.top);
 				var result = this.trace(ray);
-				if(result.hit)
-					buffer[y*s.width + x] = new lens.Color(1.0,0,0,1.0);
+				if(result.hit){
+					this.shade(ray,result)
+					buffer[y*s.width + x] = result.color;
+				}
 				else
 					buffer[y*s.width + x] = new lens.Color(0.0,0,0,1.0);
 			}
@@ -263,8 +302,15 @@ lens.SceneDemo1 = function () {
 	var sp = new lens.Sphere(
 		new lens.Vector3(0,0,0),
 		1.0,
-		new lens.Color(0,0,1.0,1.0));
+		new lens.Color(0,0,1));
 	scn.addObj(sp);
+
+	scn.addObj(
+		new lens.Sphere(
+			new lens.Vector3(1,0,-1),
+			0.5,
+			new lens.Color(1,0,0))
+	)
 
 	//4:3 camera
 	var cam = new lens.Camera(
