@@ -67,10 +67,10 @@ lens.Vector3 = (function () {
 
 lens.Color = (function (){
 	var c = function (r,g,b,a) {
-		this.r = r || 0;
-		this.g = g || 0;
-		this.b = b || 0;
-		this.a = a || 1.0;
+		this.r = r;
+		this.g = g;
+		this.b = b;
+		this.a = a;
 	}
 
 	c.prototype.to255 = function () {
@@ -270,7 +270,38 @@ lens.Renderer = (function () {
 		return ray;
 	}
 
+	rndr.prototype.refractedRay = function (ray, result) {
+		var n = result.ref_idx / 1.5;
+		var t = result.normal.dot(ray.direction);
+		var ta = n * n * (1 - t * t);
+		var ref_ray = null;
+
+		if (ta <= 1) {
+			result.ref_idx = 1.5;
+			var direction = ray.direction.mul(n)
+				.sub(result.normal.mul(n + Math.sqrt(1 - ta)));
+			ref_ray = new lens.Ray(result.hit_point, direction);
+		}
+		return ref_ray;
+	}
+
+	rndr.prototype.traceFirstHit = function (ray) {
+		var objs = this.job.scene.objects;
+		var objs_qty = objs.length;
+
+		for(var i = 0; i < objs_qty; ++i) {
+			var o = objs[i];
+			if(o.hit(ray).hit === true) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
 	rndr.prototype.trace = function (ray){
+		var that = this;
+
 		var result = {
 			distance: Number.MAX_VALUE,
 			hit: false
@@ -281,11 +312,22 @@ lens.Renderer = (function () {
 			
 			if (trc.hit === true && trc.distance < result.distance) {
 				result = trc;
+
+				result.ref_idx = 1.00293;
+
 				result.hit_point = ray.origin.add(
 					ray.direction.mul(
 						result.distance));
 				result.normal = result.obj.normal(
 					result.hit_point);
+
+				if (result.obj.color.a < 1) {
+					var ref_ray = that.refractedRay(ray, result);
+					if (ref_ray) {
+						result = that.trace(ref_ray);
+						console.log(result);
+					}
+				}
 			}
 		});
 
@@ -295,14 +337,13 @@ lens.Renderer = (function () {
 	rndr.prototype.shade = function (ray, result) {
 		var that = this;
 
-		result.color = new lens.Color();
+		result.color = new lens.Color(0,0,0,1);
 
 		this.job.scene.lights.forEach(function (li) {
 			var direction = li.center.sub(result.hit_point).normal();
 			var shadow_ray = new lens.Ray(result.hit_point,direction);
-			var res = that.trace(shadow_ray);
 
-			if(res.hit === false) {
+			if(that.traceFirstHit(shadow_ray) === false) {
 				var tc = result.normal.dot(direction.normal());
 				if(tc > 0) {
 					result.color = result.obj.color.mul(tc);
@@ -346,21 +387,21 @@ lens.SceneDemo1 = function () {
 	var sp = new lens.Sphere(
 		new lens.Vector3(0,0,0),
 		1.0,
-		new lens.Color(0,0,1));
+		new lens.Color(0,0,1,1));
 	scn.addObj(sp);
 
 	scn.addObj(
 		new lens.Sphere(
 			new lens.Vector3(2,0,-1),
 			0.5,
-			new lens.Color(1,0,0))
+			new lens.Color(1,0,0,1))
 	);
 
 	scn.addObj(
 		new lens.Sphere(
 			new lens.Vector3(-3,0,-1),
 			0.5,
-			new lens.Color(0,1,0))
+			new lens.Color(0,1,0,1))
 	);
 
 	scn.addObj(
@@ -369,6 +410,13 @@ lens.SceneDemo1 = function () {
 			9999999999,
 			new lens.Color(1,1,1,1))
 	);
+
+	scn.addObj(
+		new lens.Sphere(
+			new lens.Vector3(2,2,-2),
+			0.5,
+			new lens.Color(1,1,1,0))
+		);
 
 	scn.addLight(
 		new lens.PointLight(
@@ -400,6 +448,7 @@ lens.render = function(done){
 
 	done(buffer);
 }
+
 
 exports = lens;
 
