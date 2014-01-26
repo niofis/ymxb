@@ -128,9 +128,40 @@ lens.Sphere = (function () {
 	sp.prototype.hit = function (ray) {
 		var result = {
 			hit: false,
-			distance: 0
+			distance: 0,
+			obj: this
 		}
-		var f = ray.origin.sub(this.center);
+
+		var L = this.center.sub(ray.origin);
+		var tca = L.dot(ray.direction);
+
+		if (tca < 0) {
+			return result;
+		}
+
+		var d2 = L.dot(L) - tca * tca;
+
+		if (d2 > this.radius) {
+			return result;
+		}
+
+		var thc = Math.sqrt(this.radius - d2);
+
+		var t0 = tca - thc;
+		var t1 = tca + thc;
+
+		if(t1 < t0){
+			t0 = t1;
+		}
+
+		if(t0 < 0.1){
+			return result;
+		}
+
+		result.hit = true;
+		result.distance = t0;
+		return result;
+/*
 		var b = f.dot(ray.direction) * -2.0;
 		var b2 = b * b;
 		var c = f.dot(f) - (this.radius * this.radius);
@@ -147,7 +178,7 @@ lens.Sphere = (function () {
 			t = (b + t0) / 2;
 		}
 
-		if (t < 0.01){
+		if (t < 0.1){
 			return result;
 		}
 
@@ -155,6 +186,7 @@ lens.Sphere = (function () {
 		result.distance = t;
 
 		return result;
+		*/
 	}
 	return sp;
 })();
@@ -234,27 +266,26 @@ lens.Renderer = (function () {
 			.sub(this.job.scene.camera.eye)
 			.normal();
 
-		var ray = new lens.Ray(screen_point,direction);
+		var ray = new lens.Ray(this.job.scene.camera.eye,direction);
 		return ray;
 	}
 
 	rndr.prototype.trace = function (ray){
 		var result = {
-			distance : Number.MAX_VALUE,
-			obj: null,
-			hit: false,
-			color: new lens.Color()
+			distance: Number.MAX_VALUE,
+			hit: false
 		};
+
 		this.job.scene.objects.forEach(function (obj) {
 			var trc = obj.hit(ray);
 			
-			if (trc.hit == true && trc.distance < result.distance) {
-				result.distance = trc.distance;
-				result.obj = obj;
-				result.hit = true;
-				result.hit_point = ray.origin.add(ray.direction.mul(
+			if (trc.hit === true && trc.distance < result.distance) {
+				result = trc;
+				result.hit_point = ray.origin.add(
+					ray.direction.mul(
 						result.distance));
-				result.normal = result.obj.normal(result.hit_point);
+				result.normal = result.obj.normal(
+					result.hit_point);
 			}
 		});
 
@@ -262,9 +293,22 @@ lens.Renderer = (function () {
 	}
 
 	rndr.prototype.shade = function (ray, result) {
-		var tc = - ray.direction.dot(result.hit_point);
-		result.color = result.obj.color.mul(tc);
-		
+		var that = this;
+
+		result.color = new lens.Color();
+
+		this.job.scene.lights.forEach(function (li) {
+			var direction = li.center.sub(result.hit_point).normal();
+			var shadow_ray = new lens.Ray(result.hit_point,direction);
+			var res = that.trace(shadow_ray);
+
+			if(res.hit === false) {
+				var tc = result.normal.dot(direction.normal());
+				if(tc > 0) {
+					result.color = result.obj.color.mul(tc);
+				}
+			}
+		});
 	}
 
 	rndr.prototype.render = function (job,buffer) {
@@ -288,7 +332,7 @@ lens.Renderer = (function () {
 					buffer[y*s.width + x] = result.color;
 				}
 				else
-					buffer[y*s.width + x] = new lens.Color(0.0,0,0,1.0);
+					buffer[y*s.width + x] = new lens.Color(0.2,0.2,0.2,1.0);
 			}
 		}
 	}
@@ -307,10 +351,30 @@ lens.SceneDemo1 = function () {
 
 	scn.addObj(
 		new lens.Sphere(
-			new lens.Vector3(1,0,-1),
+			new lens.Vector3(2,0,-1),
 			0.5,
 			new lens.Color(1,0,0))
-	)
+	);
+
+	scn.addObj(
+		new lens.Sphere(
+			new lens.Vector3(-3,0,-1),
+			0.5,
+			new lens.Color(0,1,0))
+	);
+
+	scn.addObj(
+		new lens.Sphere(
+			new lens.Vector3(0,0,100050),
+			9999999999,
+			new lens.Color(1,1,1,1))
+	);
+
+	scn.addLight(
+		new lens.PointLight(
+			new lens.Vector3(50,50,-50)
+			)
+		);
 
 	//4:3 camera
 	var cam = new lens.Camera(
