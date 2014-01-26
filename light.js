@@ -161,34 +161,69 @@ lens.Sphere = (function () {
 		result.hit = true;
 		result.distance = t0;
 		return result;
-/*
-		var b = f.dot(ray.direction) * -2.0;
-		var b2 = b * b;
-		var c = f.dot(f) - (this.radius * this.radius);
-		var i = b2 - (4.0 * c);
+	}
+	return sp;
+})();
 
-		if (i < 0) {
+lens.Triangle = (function () {
+	var tr = function (v0, v1, v2, color) {
+		this.v0 = v0 || new lens.Vector3();
+		this.v1 = v1 || new lens.Vector3();
+		this.v2 = v2 || new lens.Vector3();
+		this.color = color || new lens.Color();
+
+		this.n = v1.sub(v0)
+		.cross(v2.sub(v0)).normal();
+	}
+
+	tr.prototype.normal = function () {
+		return this.n;
+	}
+
+	tr.prototype.hit = function (ray) {
+		var result = {
+			hit: false,
+			distance: 0,
+			obj: this
+		}
+
+		var edge1 = this.v1.sub(this.v0);
+		var edge2 = this.v2.sub(this.v0);
+		var pvec = ray.direction.cross(edge2);
+		var det = edge1.dot(pvec);
+
+		if (det === 0) {
 			return result;
 		}
 
-		var t0 = Math.sqrt(i);
-		var t = (b - t0) / 2;
+		var inv_det = 1 / det;
+		var tvec = ray.origin.sub(this.v0);
+		var u = pvec.dot(tvec) * inv_det;
 
-		if (t < 0.1){
-			t = (b + t0) / 2;
+		if (u < 0 || u > 1) {
+			return result;
 		}
 
-		if (t < 0.1){
+		var qvec = tvec.cross(edge1);
+		var v = ray.direction.dot(qvec) * inv_det;
+
+		if (v < 0 || u + v > 1) {
+			return result;
+		}
+
+		var t = edge2.dot(qvec) * inv_det;
+
+		if (t < 0.1) {
 			return result;
 		}
 
 		result.hit = true;
 		result.distance = t;
-
 		return result;
-		*/
 	}
-	return sp;
+
+	return tr;
+
 })();
 
 lens.Camera = (function () {
@@ -325,7 +360,6 @@ lens.Renderer = (function () {
 					var ref_ray = that.refractedRay(ray, result);
 					if (ref_ray) {
 						result = that.trace(ref_ray);
-						console.log(result);
 					}
 				}
 			}
@@ -381,9 +415,52 @@ lens.Renderer = (function () {
 	return rndr;
 })();
 
+function cornellBox (scene) {
+	var w = 4;
+	var h = 8;
+	var l = 8;
+	var back1 = new lens.Triangle(
+		new lens.Vector3(-w,0,l),
+		new lens.Vector3(-w,h,l),
+		new lens.Vector3(w,0,l),
+		new lens.Color(1,1,1,1)
+		);
+
+	var back2 = new lens.Triangle(
+		new lens.Vector3(-w,h,l),
+		new lens.Vector3(w,h,l),
+		new lens.Vector3(w,0,l),
+		new lens.Color(1,1,1,1)
+		);
+
+	var bottom1 = new lens.Triangle(
+		new lens.Vector3(-w,0,l),
+		new lens.Vector3(w,0,l),
+		new lens.Vector3(w,0,-l),
+		new lens.Color(1,1,1,1)
+		);
+
+	var bottom2 = new lens.Triangle(
+		new lens.Vector3(-w,0,l),
+		new lens.Vector3(w,0,-l),
+		new lens.Vector3(-w,0,-l),
+		new lens.Color(1,1,1,1)
+		);
+
+
+	scene.addObj(back1);
+	scene.addObj(back2);
+	scene.addObj(bottom1);
+	scene.addObj(bottom2);
+}
+
 lens.SceneDemo1 = function () {
 	var scn = new lens.Scene();
+
+	cornellBox(scn);
 	//Blue sphere
+
+	/*
 	var sp = new lens.Sphere(
 		new lens.Vector3(0,0,0),
 		1.0,
@@ -403,21 +480,13 @@ lens.SceneDemo1 = function () {
 			0.5,
 			new lens.Color(0,1,0,1))
 	);
-
-	scn.addObj(
-		new lens.Sphere(
-			new lens.Vector3(0,0,100050),
-			9999999999,
-			new lens.Color(1,1,1,1))
-	);
-
 	scn.addObj(
 		new lens.Sphere(
 			new lens.Vector3(2,2,-2),
 			0.5,
 			new lens.Color(1,1,1,0))
 		);
-
+*/
 	scn.addLight(
 		new lens.PointLight(
 			new lens.Vector3(50,50,-50)
