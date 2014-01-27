@@ -495,10 +495,10 @@ lens.SceneDemo1 = function () {
 
 	//4:3 camera
 	var cam = new lens.Camera(
-		new lens.Vector3(-3.2,0,-5),
-		new lens.Vector3(-3.2,4.8,-5),
-		new lens.Vector3(3.2,4.8,-5),
-		new lens.Vector3(0,2.4,-15));
+		new lens.Vector3(-6.4,0,-5),
+		new lens.Vector3(-6.4,9.6,-5),
+		new lens.Vector3(6.4,9.6,-5),
+		new lens.Vector3(0,4.8,-15));
 	scn.camera=cam;
 
 	return scn;
