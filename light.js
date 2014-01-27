@@ -447,11 +447,43 @@ function cornellBox (scene) {
 		new lens.Color(1,1,1,1)
 		);
 
+	var left1 = new lens.Triangle(
+		new lens.Vector3(-w,0,-l),
+		new lens.Vector3(-w,h,-l),
+		new lens.Vector3(-w,0,l),
+		new lens.Color(1,0,0,1)
+		);
+
+	var left2 = new lens.Triangle(
+		new lens.Vector3(-w,h,-l),
+		new lens.Vector3(-w,h,l),
+		new lens.Vector3(-w,0,l),
+		new lens.Color(1,0,0,1)
+		);
+
+	var right1 = new lens.Triangle(
+		new lens.Vector3(w,0,-l),
+		new lens.Vector3(w,0,l),
+		new lens.Vector3(w,h,-l),
+		new lens.Color(0,1,0,1)
+		);
+
+	var right2 = new lens.Triangle(
+		new lens.Vector3(w,h,-l),
+		new lens.Vector3(w,0,l),
+		new lens.Vector3(w,h,l),
+		new lens.Color(0,1,0,1)
+		);
+
 
 	scene.addObj(back1);
 	scene.addObj(back2);
 	scene.addObj(bottom1);
 	scene.addObj(bottom2);
+	scene.addObj(left1);
+	scene.addObj(left2);
+	scene.addObj(right1);
+	scene.addObj(right2);
 }
 
 lens.SceneDemo1 = function () {
@@ -489,16 +521,16 @@ lens.SceneDemo1 = function () {
 */
 	scn.addLight(
 		new lens.PointLight(
-			new lens.Vector3(50,50,-50)
+			new lens.Vector3(0,3,0)
 			)
 		);
 
 	//4:3 camera
 	var cam = new lens.Camera(
-		new lens.Vector3(-6.4,0,-5),
-		new lens.Vector3(-6.4,9.6,-5),
-		new lens.Vector3(6.4,9.6,-5),
-		new lens.Vector3(0,4.8,-15));
+		new lens.Vector3(-6.4,0,-10),
+		new lens.Vector3(-6.4,9.6,-10),
+		new lens.Vector3(6.4,9.6,-10),
+		new lens.Vector3(0,4.8,-20));
 	scn.camera=cam;
 
 	return scn;
