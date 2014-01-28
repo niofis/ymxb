@@ -428,77 +428,81 @@ lens.Renderer = (function () {
 	return rndr;
 })();
 
-function cornellBox (scene) {
-	var w = 10;
-	var h = 8;
-	var l = 14;
+function cornellBox (width, height, length, center, scene) {
+	var w = width;
+	var h = height;
+	var l = length;
+	var x = center.x;
+	var y = center.y;
+	var z = center.z;
+
 	var back1 = new lens.Triangle(
-		new lens.Vector3(-w,-h,l),
-		new lens.Vector3(-w,h,l),
-		new lens.Vector3(w,-h,l),
+		new lens.Vector3(-w+x,-h+y,l+z),
+		new lens.Vector3(-w+x,h+y,l+z),
+		new lens.Vector3(w+x,-h+y,l+z),
 		new lens.Color(1,1,1,1)
 		);
 
 	var back2 = new lens.Triangle(
-		new lens.Vector3(-w,h,l),
-		new lens.Vector3(w,h,l),
-		new lens.Vector3(w,-h,l),
+		new lens.Vector3(-w+x,h+y,l+z),
+		new lens.Vector3(w+x,h+y,l+z),
+		new lens.Vector3(w+x,-h+y,l+z),
 		new lens.Color(1,1,1,1)
 		);
 
 	var bottom1 = new lens.Triangle(
-		new lens.Vector3(-w,-h,l),
-		new lens.Vector3(w,-h,l),
-		new lens.Vector3(w,-h,-l),
+		new lens.Vector3(-w+x,-h+y,l+z),
+		new lens.Vector3(w+x,-h+y,l+z),
+		new lens.Vector3(w+x,-h+y,-l+z),
 		new lens.Color(1,1,1,1)
 		);
 
 	var bottom2 = new lens.Triangle(
-		new lens.Vector3(-w,-h,l),
-		new lens.Vector3(w,-h,-l),
-		new lens.Vector3(-w,-h,-l),
+		new lens.Vector3(-w+x,-h+y,l+z),
+		new lens.Vector3(w+x,-h+y,-l+z),
+		new lens.Vector3(-w+x,-h+y,-l+z),
 		new lens.Color(1,1,1,1)
 		);
 
 	var top1 = new lens.Triangle(
-		new lens.Vector3(-w,h,l),
-		new lens.Vector3(w,h,-l),
-		new lens.Vector3(w,h,l),
+		new lens.Vector3(-w+x,h+y,l+z),
+		new lens.Vector3(w+x,h+y,-l+z),
+		new lens.Vector3(w+x,h+y,l+z),
 		new lens.Color(1,1,1,1)
 		);
 
 	var top2 = new lens.Triangle(
-		new lens.Vector3(-w,h,l),
-		new lens.Vector3(-w,h,-l),
-		new lens.Vector3(w,h,-l),
+		new lens.Vector3(-w+x,h+y,l+z),
+		new lens.Vector3(-w+x,h+y,-l+z),
+		new lens.Vector3(w+x,h+y,-l+z),
 		new lens.Color(1,1,1,1)
 		);
 
 	var left1 = new lens.Triangle(
-		new lens.Vector3(-w,-h,-l),
-		new lens.Vector3(-w,h,-l),
-		new lens.Vector3(-w,-h,l),
+		new lens.Vector3(-w+x,-h+y,-l+z),
+		new lens.Vector3(-w+x,h+y,-l+z),
+		new lens.Vector3(-w+x,-h+y,l+z),
 		new lens.Color(1,0,0,1)
 		);
 
 	var left2 = new lens.Triangle(
-		new lens.Vector3(-w,h,-l),
-		new lens.Vector3(-w,h,l),
-		new lens.Vector3(-w,-h,l),
+		new lens.Vector3(-w+x,h+y,-l+z),
+		new lens.Vector3(-w+x,h+y,l+z),
+		new lens.Vector3(-w+x,-h+y,l+z),
 		new lens.Color(1,0,0,1)
 		);
 
 	var right1 = new lens.Triangle(
-		new lens.Vector3(w,-h,-l),
-		new lens.Vector3(w,-h,l),
-		new lens.Vector3(w,h,-l),
+		new lens.Vector3(w+x,-h+y,-l+z),
+		new lens.Vector3(w+x,-h+y,l+z),
+		new lens.Vector3(w+x,h+y,-l+z),
 		new lens.Color(0,1,0,1)
 		);
 
 	var right2 = new lens.Triangle(
-		new lens.Vector3(w,h,-l),
-		new lens.Vector3(w,-h,l),
-		new lens.Vector3(w,h,l),
+		new lens.Vector3(w+x,h+y,-l+z),
+		new lens.Vector3(w+x,-h+y,l+z),
+		new lens.Vector3(w+x,h+y,l+z),
 		new lens.Color(0,1,0,1)
 		);
 
@@ -515,17 +519,62 @@ function cornellBox (scene) {
 	scene.addObj(right2);
 }
 
+function spheresPyramid (
+		x_size, z_size, y_size, radius, color, base_center, scn) {
+	var x = 0;
+	var y = 0;
+	var z = 0;
+	var rad = radius * 1.7;
+
+	for(var k=0; k<y_size; ++k){
+
+		var dx = rad * (x_size-1) / 2;
+		var dz = rad * (z_size-1) / 2;
+
+		y = (k * rad) + base_center.y;
+
+		for(var j=0; j<z_size; ++j){
+
+			z = (j * rad) - dz + base_center.z;
+			for(var i=0; i<x_size; ++i){
+
+				x = (i * rad) - dx + base_center.x;
+
+				var sp = new lens.Sphere(
+					new lens.Vector3(x,y,z),
+					radius,
+					color);
+
+				scn.addObj(sp);
+			}
+		}
+		x_size-=1;
+		z_size-=1;
+	}
+
+}
+
 lens.SceneDemo1 = function () {
 	var scn = new lens.Scene();
 
-	cornellBox(scn);
-	//Blue sphere
+	cornellBox(10,8,14,new lens.Vector3(0,0,0),scn);
+
+	spheresPyramid(
+		3,3,3,	//size of pyramid
+		1,		//spheres radius
+		new lens.Color(1,1,0,1), //color for spheres
+		new lens.Vector3(0,-3,0), //center position for base
+		scn 	//scene to add object
+	);
 
 	
+	//Blue sphere
+
+	/*
 	var sp = new lens.Sphere(
 		new lens.Vector3(0,0,0),
 		1.0,
-		new lens.Color(0,0,1,1));
+		new lens.Color(1,1,0,1));
 	scn.addObj(sp);
 
 	scn.addObj(
@@ -543,8 +592,8 @@ lens.SceneDemo1 = function () {
 	);
 	scn.addObj(
 		new lens.Sphere(
-			new lens.Vector3(2,2,-2),
-			0.5,
+			new lens.Vector3(2,-5,-4),
+			1.5,
 			new lens.Color(1,1,1,0))
 		);
 
@@ -554,10 +603,10 @@ lens.SceneDemo1 = function () {
 			new lens.Vector3(3,3,-3)
 			)
 		);
-
+*/
 	scn.addLight(
 		new lens.PointLight(
-			new lens.Vector3(0,0,-10)
+			new lens.Vector3(5,0,-10)
 			)
 		);
 
