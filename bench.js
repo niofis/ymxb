@@ -3,7 +3,7 @@ var spawn = require('child_process').spawn;
 function hrdiff(t1, t2) {
     var s = t2[0] - t1[0];
     var mms = t2[1] - t1[1];
-    return s+(mms/1e9);//*1e9 + mms;
+    return s+(mms/1e9);
 }
 
 var hr_start = process.hrtime();

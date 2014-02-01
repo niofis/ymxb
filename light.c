@@ -68,11 +68,14 @@ int ppm_create(char* filename, int width, int height, short max_color, int* data
 				int p = y*height + x;
 				//gets the address for the pixel data
 				byte* pixel=(byte*)(data + p);
-				fputc(pixel[1],file);
+				/*fputc(pixel[1],file);
 				fputc(pixel[2],file);
-				fputc(pixel[3],file);
+				fputc(pixel[3],file);*/
+				fputc(0,file);
+				fputc(0,file);
+				fputc(0,file);
 
-				printf("(%i,%i,%i) %X \n",pixel[1],pixel[2],pixel[3],((int*)pixel));
+				//printf("(%i,%i,%i) %X \n",pixel[1],pixel[2],pixel[3],((unsigned int*)pixel));
 			}
 		}
 
@@ -235,7 +238,7 @@ int render(job_desc job)
 	return 0;
 }
 
-int main(int argc, char* argv)
+int main(int argc, char** argv)
 {
 	job_desc job = job_demo();
 
@@ -244,8 +247,6 @@ int main(int argc, char* argv)
 	ppm_create("image.ppm",job.width,job.height,255,job.buffer);
 
 	free(job.buffer);
-
-	system("pause");
 
 	return 0;
 }
