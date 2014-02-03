@@ -10,6 +10,5 @@ var hr_start = process.hrtime();
 var proc = spawn('node', ['light.js']);
 proc.on('close', function(code) {
 	var hr_end = process.hrtime();
-	console.log('light.js closed with code: ' + code);
 	console.log('time: ' + hrdiff(hr_start,hr_end) + " s");
 })
