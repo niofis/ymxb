@@ -75,10 +75,10 @@ lens.Color = (function (){
 
 	c.prototype.to255 = function () {
 		var c255=[		
-			Math.min(this.r*255,255),
-			Math.min(this.g*255,255),
-			Math.min(this.b*255,255),
-			Math.min(this.a*255,255)
+			Math.round(Math.min(this.r*255,255)),
+			Math.round(Math.min(this.g*255,255)),
+			Math.round(Math.min(this.b*255,255)),
+			Math.round(Math.min(this.a*255,255))
 		];
 		return c255;
 	}
@@ -661,28 +661,44 @@ if (process) {
 
 if(app.env === 'node'){
 	var fs = require('fs');
-	var pngjs = require('pngjs');
 	var width=640;
 	var height = 480;
 
+	var out_file = process.argv[2];
+
+	var output = "stdout";
+
+	if(out_file){
+		output = "file";
+	}
+
 	lens.render(function(buffer){
-		var png = new pngjs.PNG({width:width,height:height});
 
+		function toHex (n) {
+			return ('0' + n.toString(16)).substr(-2);
+		}
+		
+		var pixels = '';
 
-		for(var y=0;y<height;++y){
-			for(var x=0;x<width;++x){
+		for(var y=0; y<height; ++y){
+			for(var x=0; x<width; ++x){
 				var p = 4*(y*width + x);
 				var c = buffer[(y*width + x)].to255();
-
-				png.data[p] = c[0];
-				png.data[p+1] = c[1];
-				png.data[p+2] = c[2];
-				png.data[p+3] = c[3];
+				var s = toHex(c[0]) + toHex(c[1]) + toHex(c[2]);
+				pixels += s;
 			}
+			pixels += '\n';
 		}
+		if(output === "file") {
+			var ji = {};
 
-
-		png.pack().pipe(fs.createWriteStream('out.png'));
+			ji.width = width;
+			ji.height = height;
+			ji.pixels = pixels;
+			fs.writeFileSync('image.ji',JSON.stringify(ji),{encoding:'utf8'});
+		} else {
+			process.stdout.write(pixels);
+		}
 	});
 	
 }

@@ -53,31 +53,77 @@ function loadJI (source_file) {
 	return img;
 }
 
-function savePNG (img, dest_file) {
+function loadSTDIN (callback) {
+	process.stdin.resume();
+	process.stdin.setEncoding('utf8');
+	var data = '';
+	process.stdin.on('data', function (chunk) {
+		data += chunk;
+	});
+	process.stdin.on('end', function () {
+		//create img
+		var img = {};
+		var lines = data.split('\n');
+
+		img.height = lines.length;
+		img.width = lines[0].length / 6;
+		
+		if(lines[lines.length-1].length == 0){
+			img.height--;
+		}
+
+
+		var pixels = [];
+
+		data.match(/[0-9a-f]{6}/ig)
+		.forEach(function (pixel) {
+			var p = {
+				r: parseInt(pixel.substr(0,2),16),
+				g: parseInt(pixel.substr(2,2),16),
+				b: parseInt(pixel.substr(4,2),16)
+			}
+			pixels.push(p);
+		});
+
+		img.pixels = pixels;
+		callback(img);
+	});
+}
+
+function savePNG (img, file) {
 	var png = new pngjs.PNG({width:img.width,height:img.height});
 
+	for(var y=0; y<img.height; ++y){
+		for(var x=0; x<img.width; ++x){
+			var po = (y*img.width + x);
+			var p = po*4;
+			var c = img.pixels[po];
 
-	for(var y=0;y<height;++y){
-		for(var x=0;x<width;++x){
-			var p = 4*(y*width + x);
-			var c = buffer[(y*width + x)].to255();
-
-			png.data[p] = c[0];
-			png.data[p+1] = c[1];
-			png.data[p+2] = c[2];
-			png.data[p+3] = c[3];
+			png.data[p] = c.r;
+			png.data[p+1] = c.g;
+			png.data[p+2] = c.b;
+			png.data[p+3] = 255;
 		}
 	}
 
-	png.pack().pipe(fs.createWriteStream(dest_file));
+	png.pack().pipe(fs.createWriteStream(file));
 }
 
 var format = process.argv[2];
 var source_file = process.argv[3];
 var dest_file = process.argv[4] || source_file + ".png";
 
+var img = null;
 if (format === "-ppn") {
-
+	img = loadPPN(source_file);
+} else if (format == "-ji") {
+	img = loadJI(source_file);
+} else if (format == "-stdin") {
+	loadSTDIN(function (img) {
+		savePNG(img, source_file);
+	});
 }
-var img = loadPPN(source_file);
-savePNG(img,dest_file);
+
+if (img) {
+	savePNG(img,dest_file);	
+}
