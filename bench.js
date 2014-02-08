@@ -39,20 +39,28 @@ function promise(test) {
 var test1 = promise(
 	{
 		title:'light.js - simple',
-		cmd: ['node', 'light.js'],
+		cmd: ['node', './js/light.js'],
 		out_image: 'light.js.png'
 	}
 );
 var test2 = promise(
 	{
-		title:'light.js - simple 2',
-		cmd: ['node', 'light.js'],
-		out_image: 'light2.js.png'
+		title:'lua',
+		cmd: ['lua', './lua/render.lua','-stdout'],
+		out_image: 'lua.png'
+	}
+);
+var test3 = promise(
+	{
+		title:'luajit',
+		cmd: ['luajit', './lua/render.lua','-stdout'],
+		out_image: 'luajit.png'
 	}
 );
 
 test1()
 .then(test2)
+.then(test3)
 .done(function () {
 	console.log("All tests done!");
 });

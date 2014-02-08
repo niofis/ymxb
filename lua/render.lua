@@ -21,19 +21,20 @@ DEALINGS IN THE SOFTWARE.
 
 Version 1.0.1
 ]]
-
+package.path = package.path .. ';./lua/?.lua'
 
 local math=require("math")
 local rt=require("raytracer")
 local image=require("image")
 
-local scene=require("demo")
+local scene=require("scene")
 
 res_width=320
 res_height=240
 use_sdl=0
 use_png=0
 use_hex=0
+use_stdout=0
 print_prog=0
 use_path_tracing=0
 path_tracing_samples=10
@@ -94,8 +95,10 @@ end
 
 scn=scene.load()
 
-print("Resolution: " .. res_width .."x"..res_height)
-print("Total objects: " .. table.maxn(scn.objects))
+if(use_stdout==0) then
+	print("Resolution: " .. res_width .."x"..res_height)
+	print("Total objects: " .. table.maxn(scn.objects))
+end
 
 
 render={}
@@ -155,7 +158,10 @@ end
 st=os.clock()
 renderwithupdate()
 st= os.clock() - st
-print("\n" .. st .. "s Total")
+
+if(use_stdout==0) then
+	print("\n" .. st .. "s Total")
+end
 
 render.x=section_x
 render.y=section_y
@@ -179,7 +185,10 @@ if(use_png==1) then
 	print("done!")
 end
 
-print("all done!")
+if(use_stdout==1) then
+	io.stdout:write(image.serialize(render))
+end
+
 if(use_sdl==1) then
 	sdl.waitclose()
 end
