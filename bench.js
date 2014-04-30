@@ -59,8 +59,8 @@ var test3 = promise(
 );
 
 test1()
-.then(test2)
-.then(test3)
+//.then(test2)
+//.then(test3)
 .done(function () {
 	console.log("All tests done!");
 });
