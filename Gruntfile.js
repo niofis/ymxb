@@ -23,21 +23,21 @@ module.exports = function(grunt) {
                 nospawn: true
             },
             sweetjs: {
-                files: ['js/**/*.js'],
+                files: ['js/**/*.sjs.js'],
                 tasks: ['sweetjs:js']
             }
         }
     });
- 
+
     grunt.event.on('watch', function(action, filepath, target) {
         if(action == 'changed' && target == 'sweetjs') {
             grunt.config.set('sweetjs.src.src', [filepath]);
             grunt.config.set('sweetjs.src.dest', filepath.replace(/^js/, 'build'));
         }
     });
-    
+
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-sweet.js');
- 
+
     grunt.registerTask('default', ['sweetjs']);
 };
