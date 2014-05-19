@@ -1,6 +1,6 @@
 var fs = require('fs');
 var pngjs = require('pngjs');
-//returns ppm structure
+//returns ppn structure
 //{
 //	magic: String,
 //	width: Number,
@@ -8,15 +8,15 @@ var pngjs = require('pngjs');
 //	max_color: Number,
 //	pixels: [ {r:Number, g: Number, b: Number} ]
 //}
-function loadPPM(filename) {
+function loadPPN(filename) {
 	var data = fs.readFileSync(filename, {encoding:"utf8"});
 	var img = {};
 	var matches = /(P6)\s([0-9]+)\s([0-9]+)\s([0-9]+)\s(.*)/ig.exec(data);
-	var ppm = {};
-	ppm.magic = matches[1];
-	ppm.width = parseInt(matches[2]);
-	ppm.height = parseInt(matches[3]);
-	ppm.max_color = parseInt(matches[4]);
+
+	ppn.magic = matches[1];
+	ppn.width = parseInt(matches[2]);
+	ppn.height = parseInt(matches[3]);
+	ppn.max_color = parseInt(matches[4]);
 		
 	var pixels = [];
 	matches[5].match(/(...)/ig)
@@ -29,9 +29,9 @@ function loadPPM(filename) {
 
 			pixels.push(p);
 		});
-	ppm.pixels = pixels;
-	//console.log(ppm,pixels[0]);
-	return ppm;
+	ppn.pixels = pixels;
+	//console.log(ppn,pixels[0]);
+	return ppn;
 }
 
 function loadJI (source_file) {
@@ -114,8 +114,8 @@ var source_file = process.argv[3];
 var dest_file = process.argv[4] || source_file + ".png";
 
 var img = null;
-if (format === "-ppm") {
-	img = loadPPM(source_file);
+if (format === "-ppn") {
+	img = loadPPN(source_file);
 } else if (format == "-ji") {
 	img = loadJI(source_file);
 } else if (format == "-stdin") {

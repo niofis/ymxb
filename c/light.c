@@ -67,19 +67,15 @@ int ppm_create(char* filename, int width, int height, short max_color, int* data
 			{
 				int p = y*height + x;
 				//gets the address for the pixel data
-				int pixel = data[p];
-				//byte* pixel=(byte*)(&px);
-				/*
-				fputc(pixel[1],file);
+				byte* pixel=(byte*)(data + p);
+				/*fputc(pixel[1],file);
 				fputc(pixel[2],file);
-				fputc(pixel[3],file);
-				*/
+				fputc(pixel[3],file);*/
+				fputc(0,file);
+				fputc(0,file);
+				fputc(0,file);
 
-				fputc((pixel & 0x00FF0000) >> 16, file);
-				fputc((pixel & 0x0000FF00) >> 8, file);
-				fputc((pixel & 0x000000FF), file);
-
-				//printf("(%i,%i,%i) %X \n",pixel[1],pixel[2],pixel[3],px);
+				//printf("(%i,%i,%i) %X \n",pixel[1],pixel[2],pixel[3],((unsigned int*)pixel));
 			}
 		}
 
@@ -132,17 +128,12 @@ typedef struct
 	st_vector3 pt3;
 } st_triangle;
 
-typedef struct
-{
-	st_vector3 center;
-	float radius;
-} st_sphere;
-
 typedef struct 
 {
 	st_camera *camera;
 	st_triangle *objects;
 } st_scene;
+
 
 typedef struct
 {
@@ -192,9 +183,9 @@ st_result rnd_traceray(st_ray ray)
 {
 	st_result result;
 	result.color.a=1.0f;
-	result.color.r=0.0f;
-	result.color.g=0.0f;
-	result.color.b=1.0f;
+	result.color.r=1.0f;
+	result.color.g=1.0f;
+	result.color.b=0.0f;
 	return result;
 }
 
@@ -208,7 +199,7 @@ int rnd_color_to_argb(st_color color)
 	argb |= (int)((color.g<1.0f?color.g:1.0f)*255);
 	argb = argb<<8;
 	argb |= (int)((color.b<1.0f?color.b:1.0f)*255);
-	//printf("(%f,%f,%f,%f) %X \n",color.a,color.r,color.g,color.b,argb);
+	//printf("(%f,%f,%f) %X \n",color.r,color.g,color.b,argb);
 	return argb;
 }
 
